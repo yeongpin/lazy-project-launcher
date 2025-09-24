@@ -1,7 +1,8 @@
 {
     "name": "lazy-project-launcher",
     "version": "1.0.0",
-    "description": "Electron + Vue 3 Project",
+    "author": "Yeongpin",
+    "description": "A simple and efficient project launcher built with Electron and Vue.js for managing multiple development projects.",
     "main": "electron/main.js",
     "scripts": {
         "dev": "cross-env NODE_ENV=development concurrently \"vite\" \"wait-on tcp:12511 && electron . --disable-gpu --disable-software-rasterizer\" --kill-others",
