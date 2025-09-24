@@ -22,8 +22,10 @@ jobs:
     
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-        arch: [x64, arm64]
+        os: [windows-latest, ubuntu-latest]
+        # os: [windows-latest, macos-latest, ubuntu-latest]  # macOS disabled due to build issues
+        arch: [x64]
+        # arch: [x64, arm64]  # Disabled arm64 for now
         exclude:
           - os: windows-latest
             arch: arm64
@@ -63,12 +65,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ARCH: ${{ matrix.arch }}
-          # macOS signing and notarization
-          CSC_LINK: ${{ secrets.MAC_CERTIFICATE }}
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # macOS signing and notarization (disabled)
+          # CSC_LINK: ${{ secrets.MAC_CERTIFICATE }}
+          # CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
+          # APPLE_ID: ${{ secrets.APPLE_ID }}
+          # APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          # APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           
       # List release directory contents
       - name: List release directory
@@ -84,12 +86,12 @@ jobs:
           mkdir -p ./artifacts
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             find release -name "*.exe" -exec cp {} "./artifacts/lazy_project_launcher_${{ env.VERSION }}_win_setup.exe" \;
-          elif [ "${{ matrix.os }}" = "macos-latest" ]; then
-            if [ "${{ matrix.arch }}" = "arm64" ]; then
-              find release -name "*-arm64.dmg" -exec cp {} "./artifacts/lazy_project_launcher_${{ env.VERSION }}_mac_arm64.dmg" \;
-            else
-              find release -name "*.dmg" -not -name "*-arm64.dmg" -exec cp {} "./artifacts/lazy_project_launcher_${{ env.VERSION }}_mac.dmg" \;
-            fi
+          # elif [ "${{ matrix.os }}" = "macos-latest" ]; then
+          #   if [ "${{ matrix.arch }}" = "arm64" ]; then
+          #     find release -name "*-arm64.dmg" -exec cp {} "./artifacts/lazy_project_launcher_${{ env.VERSION }}_mac_arm64.dmg" \;
+          #   else
+          #     find release -name "*.dmg" -not -name "*-arm64.dmg" -exec cp {} "./artifacts/lazy_project_launcher_${{ env.VERSION }}_mac.dmg" \;
+          #   fi
           else
             find release -name "*.AppImage" -exec cp {} "./artifacts/lazy_project_launcher_${{ env.VERSION }}_linux.AppImage" \;
           fi
