@@ -1,0 +1,76 @@
+{
+    "name": "lazy-project-launcher",
+    "version": "1.0.0",
+    "description": "Electron + Vue 3 Project",
+    "main": "electron/main.js",
+    "scripts": {
+        "dev": "cross-env NODE_ENV=development concurrently \"vite\" \"wait-on tcp:12511 && electron . --disable-gpu --disable-software-rasterizer\" --kill-others",
+        "build": "vite build && electron-builder",
+        "preview": "vite preview"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-vue": "^4.5.0",
+        "concurrently": "^8.2.2",
+        "cross-env": "^7.0.3",
+        "electron": "^27.1.3",
+        "electron-builder": "^25.1.8",
+        "vite": "^5.0.0",
+        "vue": "^3.3.8",
+        "wait-on": "^7.2.0"
+    },
+    "dependencies": {},
+    "build": {
+        "appId": "com.lazyprojectlauncher.app",
+        "productName": "Lazy Project Launcher",
+        "directories": {
+            "output": "release"
+        },
+        "asar": true,
+        "files": [
+            "electron/**/*",
+            "dist/**/*",
+            "main.js",
+            "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+            "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+            "!**/node_modules/*.d.ts",
+            "!**/node_modules/.bin"
+        ],
+        "win": {
+            "target": [
+                {
+                    "target": "nsis",
+                    "arch": [
+                        "x64"
+                    ]
+                }
+            ]
+        },
+        "mac": {
+            "target": [
+                {
+                    "target": "dmg",
+                    "arch": [
+                        "x64",
+                        "arm64"
+                    ]
+                }
+            ]
+        },
+        "linux": {
+            "target": [
+                {
+                    "target": "AppImage",
+                    "arch": [
+                        "x64"
+                    ]
+                }
+            ]
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true,
+            "createDesktopShortcut": true,
+            "createStartMenuShortcut": true
+        }
+    }
+}
