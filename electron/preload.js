@@ -17,5 +17,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Project management
   onProjectImported: (callback) => ipcRenderer.on('project-imported', callback),
-  removeProjectImportedListener: (callback) => ipcRenderer.removeListener('project-imported', callback)
+  removeProjectImportedListener: (callback) => ipcRenderer.removeListener('project-imported', callback),
+
+  // Theme management
+  onThemeChanged: (callback) => ipcRenderer.on('theme-changed', callback),
+  removeThemeChangedListener: (callback) => ipcRenderer.removeListener('theme-changed', callback),
+
+  // Locale management
+  onLocaleChanged: (callback) => ipcRenderer.on('locale-changed', callback),
+  removeLocaleChangedListener: (callback) => ipcRenderer.removeListener('locale-changed', callback)
 })

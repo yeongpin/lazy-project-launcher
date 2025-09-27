@@ -2,8 +2,8 @@
   <div class="project-list">
     <div v-if="projectStore.projects.length === 0" class="empty-state">
       <div class="empty-icon">📁</div>
-      <h3>No projects imported yet</h3>
-      <p>Use File → Import Project to add your first project</p>
+      <h3>{{ t('project.no_projects') }}</h3>
+      <p>{{ t('project.import_first_project') }}</p>
     </div>
     
     <div v-else-if="filteredProjects.length === 0" class="empty-state">
@@ -12,11 +12,32 @@
       <p>Try adjusting your search terms</p>
     </div>
     
-    <div v-else class="project-grid">
+    <!-- Search status info -->
+    <div v-if="searchQuery.trim() && filteredProjects.length > 0" class="search-info">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+        <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2"/>
+        <line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" stroke-width="2"/>
+      </svg>
+      <span>{{ t('project.search_active_no_reorder') }}</span>
+    </div>
+    
+    <div v-if="filteredProjects.length > 0" class="project-grid">
       <div 
-        v-for="project in filteredProjects" 
+        v-for="(project, index) in filteredProjects" 
         :key="project.id"
         class="project-card"
+        :class="{ 
+          'dragging': dragState.draggedIndex === index, 
+          'drag-over': dragState.dragOverIndex === index,
+          'search-mode': searchQuery.trim()
+        }"
+        :draggable="!searchQuery.trim()"
+        @dragstart="searchQuery.trim() ? null : handleDragStart($event, index, project)"
+        @dragend="handleDragEnd"
+        @dragover.prevent="searchQuery.trim() ? null : handleDragOver($event, index)"
+        @dragleave="handleDragLeave"
+        @drop.prevent="searchQuery.trim() ? null : handleDrop($event, index)"
         @click="openProject(project)"
       >
         <div class="project-info">
@@ -52,10 +73,11 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import projectStore from '../store/projectStore'
 import ProjectActionBar from './ProjectActionBar.vue'
 import ProjectSettings from './ProjectSettings.vue'
+import { useI18n } from '../utils/useI18n'
 
 export default {
   name: 'ProjectList',
@@ -70,8 +92,19 @@ export default {
     }
   },
   setup(props) {
+    // Use i18n composable
+    const { t } = useI18n()
+    
     const selectedProject = ref(null)
     const showSettings = ref(false)
+    
+    // Drag and drop state
+    const dragState = reactive({
+      draggedIndex: null,
+      draggedProject: null,
+      dragOverIndex: null,
+      isDragging: false
+    })
     
     const openProject = (project) => {
       console.log('Opening project:', project)
@@ -98,6 +131,74 @@ export default {
       console.log('Settings saved for project:', data.projectId, data.settings)
     }
     
+    // Drag and drop handlers
+    const handleDragStart = (event, index, project) => {
+      dragState.draggedIndex = index
+      dragState.draggedProject = project
+      dragState.isDragging = true
+      
+      // Set drag effect
+      event.dataTransfer.effectAllowed = 'move'
+      event.dataTransfer.setData('text/plain', project.id)
+      
+      // Add drag image
+      const dragImage = event.target.cloneNode(true)
+      dragImage.style.opacity = '0.8'
+      event.dataTransfer.setDragImage(dragImage, 0, 0)
+    }
+    
+    const handleDragEnd = () => {
+      // Reset drag state
+      dragState.draggedIndex = null
+      dragState.draggedProject = null
+      dragState.dragOverIndex = null
+      dragState.isDragging = false
+    }
+    
+    const handleDragOver = (event, index) => {
+      event.preventDefault()
+      event.dataTransfer.dropEffect = 'move'
+      
+      if (dragState.draggedIndex !== null && dragState.draggedIndex !== index) {
+        dragState.dragOverIndex = index
+      }
+    }
+    
+    const handleDragLeave = () => {
+      dragState.dragOverIndex = null
+    }
+    
+    const handleDrop = (event, dropIndex) => {
+      event.preventDefault()
+      
+      const draggedIndex = dragState.draggedIndex
+      if (draggedIndex === null || draggedIndex === dropIndex) {
+        return
+      }
+      
+      // Only allow reordering if no search filter is active
+      if (props.searchQuery && props.searchQuery.trim()) {
+        console.log('Cannot reorder while search is active')
+        return
+      }
+      
+      // Reorder projects in the store
+      const projects = [...projectStore.projects]
+      const draggedProject = projects[draggedIndex]
+      
+      // Remove from old position
+      projects.splice(draggedIndex, 1)
+      
+      // Insert at new position
+      projects.splice(dropIndex, 0, draggedProject)
+      
+      // Update the store
+      projectStore.reorderProjects(projects)
+      
+      // Reset drag state
+      handleDragEnd()
+    }
+    
     // 过滤项目列表
     const filteredProjects = computed(() => {
       if (!props.searchQuery.trim()) {
@@ -111,15 +212,23 @@ export default {
     })
     
     return {
+      t,
       projectStore,
       selectedProject,
       showSettings,
       filteredProjects,
+      dragState,
+      searchQuery: computed(() => props.searchQuery),
       openProject,
       removeProject,
       openSettings,
       closeSettings,
-      onSettingsSaved
+      onSettingsSaved,
+      handleDragStart,
+      handleDragEnd,
+      handleDragOver,
+      handleDragLeave,
+      handleDrop
     }
   }
 }
@@ -154,6 +263,25 @@ export default {
   margin: 0;
 }
 
+/* Search info */
+.search-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.search-info svg {
+  flex-shrink: 0;
+  color: var(--accent-warning);
+}
+
 .project-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -166,14 +294,45 @@ export default {
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-lg);
   padding: var(--spacing-md);
-  cursor: pointer;
+  cursor: grab;
   transition: all var(--transition-fast);
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: relative;
   min-height: 60px;
+  user-select: none;
 }
+
+/* Drag and drop styles */
+.project-card.dragging {
+  opacity: 0.5;
+  transform: rotate(2deg);
+  cursor: grabbing;
+  z-index: 1000;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.project-card.drag-over {
+  border-color: var(--accent-primary);
+  background-color: var(--accent-primary-alpha);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.project-card:active {
+  cursor: grabbing;
+}
+
+/* Search mode - disable drag cursor */
+.project-card.search-mode {
+  cursor: pointer;
+}
+
+.project-card.search-mode:active {
+  cursor: pointer;
+}
+
 
 .project-card:hover {
   border-color: var(--primary-color);

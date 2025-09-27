@@ -1,9 +1,9 @@
 <template>
-  <div v-if="isVisible" class="settings-overlay" @click="closeSettings">
-    <div class="settings-popup" @click.stop>
+  <div v-if="isVisible" class="settings-overlay" @click="closeSettings" @keydown.esc="closeSettings">
+    <div class="settings-popup" @click.stop @keydown.enter="saveSettings" @keydown.esc="closeSettings">
       <div class="settings-header">
-        <h3>Project Settings</h3>
-        <button class="close-btn" @click="closeSettings" title="Close">
+        <h3>{{ t('project.project_settings') }}</h3>
+        <button class="close-btn" @click="closeSettings" :title="t('common.close')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z" fill="currentColor"/>
           </svg>
@@ -12,11 +12,12 @@
       
       <div class="settings-content">
         <div class="setting-group">
-          <label class="setting-label">Start Commands</label>
+          <label class="setting-label">{{ t('settings.startup_command') }}</label>
           <textarea 
+            ref="startCommandsInput"
             v-model="startCommands"
             class="setting-input"
-            placeholder="Enter start commands (e.g., npm start, python app.py)"
+            :placeholder="t('settings.startup_command')"
             rows="3"
             resize="none"
             spellcheck="false"
@@ -27,8 +28,8 @@
         </div>
         
         <div class="settings-actions">
-          <button class="cancel-btn" @click="closeSettings">Cancel</button>
-          <button class="save-btn" @click="saveSettings">Save</button>
+          <button class="cancel-btn" @click="closeSettings">{{ t('common.cancel') }}</button>
+          <button class="save-btn" @click="saveSettings">{{ t('common.save') }}</button>
         </div>
       </div>
     </div>
@@ -36,6 +37,8 @@
 </template>
 
 <script>
+import { useI18n } from '../utils/useI18n'
+
 export default {
   name: 'ProjectSettings',
   props: {
@@ -46,6 +49,14 @@ export default {
     isVisible: {
       type: Boolean,
       default: false
+    }
+  },
+  setup() {
+    // Use i18n composable
+    const { t } = useI18n()
+    
+    return {
+      t
     }
   },
   data() {
@@ -61,9 +72,80 @@ export default {
         }
       },
       immediate: true
+    },
+    isVisible: {
+      handler(newValue) {
+        if (newValue) {
+          // 当弹窗显示时，延迟聚焦到输入框
+          this.$nextTick(() => {
+            this.focusInput()
+          })
+        }
+      },
+      immediate: false
     }
   },
+  mounted() {
+    // 如果组件挂载时弹窗已经可见，则聚焦
+    if (this.isVisible) {
+      this.$nextTick(() => {
+        this.focusInput()
+      })
+    }
+    
+    // 添加全局键盘事件监听
+    document.addEventListener('keydown', this.handleKeydown)
+  },
+  
+  beforeUnmount() {
+    // 移除全局键盘事件监听
+    document.removeEventListener('keydown', this.handleKeydown)
+  },
   methods: {
+    handleKeydown(event) {
+      // 只有当弹窗可见时才处理键盘事件
+      if (!this.isVisible) return
+      
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        this.closeSettings()
+      } else if (event.key === 'Enter' && event.ctrlKey) {
+        // Ctrl+Enter 保存设置
+        event.preventDefault()
+        this.saveSettings()
+      }
+    },
+    
+    focusInput() {
+      try {
+        if (this.$refs.startCommandsInput) {
+          this.$refs.startCommandsInput.focus()
+          // 选中所有文本以便用户可以直接开始输入
+          this.$refs.startCommandsInput.select()
+        } else {
+          // 如果第一次尝试失败，延迟再试一次
+          setTimeout(() => {
+            if (this.$refs.startCommandsInput) {
+              this.$refs.startCommandsInput.focus()
+              this.$refs.startCommandsInput.select()
+            }
+          }, 100)
+        }
+      } catch (error) {
+        console.log('Failed to focus input:', error)
+        // 如果还是失败，再试一次
+        setTimeout(() => {
+          try {
+            if (this.$refs.startCommandsInput) {
+              this.$refs.startCommandsInput.focus()
+            }
+          } catch (e) {
+            console.log('Final focus attempt failed:', e)
+          }
+        }, 200)
+      }
+    },
+    
     loadSettings() {
       // 从 localStorage 加载项目设置
       const settings = localStorage.getItem(`project-settings-${this.project.id}`)

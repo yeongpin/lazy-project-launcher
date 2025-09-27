@@ -186,8 +186,13 @@ function createWindow() {
     windowManager = new WindowManager()
     windowManager.setupIPC()
 
+    // Read version from package.json
+    const packageInfo = require('../package.json')
+    const appTitle = `Lazy Project Launcher v${packageInfo.version}`
+
     // use WindowManager to create window
     const windowOptions = {
+        title: appTitle,
         icon: path.join(__dirname, '../icon.png'),
         width: 400,
         height: 600,
@@ -196,6 +201,10 @@ function createWindow() {
         maxWidth: 1000,
         maxHeight: 800,
         resizable: false,
+        // Enable dark theme for window frame
+        titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+        frame: true,
+        backgroundColor: '#1e293b', // dark background for window frame
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
@@ -208,6 +217,9 @@ function createWindow() {
 
     const { window } = windowManager.createWindow(windowOptions)
     mainWindow = window
+    
+    // Explicitly set the window title after creation
+    mainWindow.setTitle(appTitle)
 
     // Load the app
     if (isDev) {
@@ -215,10 +227,15 @@ function createWindow() {
         // open developer tools in a new window, detach mode
         mainWindow.webContents.openDevTools({ mode: 'detach' })
     } else {
-        // 在生产环境中，使用绝对路径加载文件
+        // in production environment, use absolute path to load file
         const indexPath = path.join(__dirname, '../dist/index.html')
         mainWindow.loadFile(indexPath)
     }
+    
+    // Ensure title is set after page load
+    mainWindow.webContents.once('did-finish-load', () => {
+        mainWindow.setTitle(appTitle)
+    })
 
     // initialize menu and update main window reference
     console.log('Creating frame menu...')
@@ -229,6 +246,21 @@ function createWindow() {
 
 // This method will be called when Electron has finished initialization
 app.whenReady().then(() => {
+    // Set initial native theme
+    const { nativeTheme } = require('electron')
+    
+    // Force dark theme for the entire app on Windows
+    if (process.platform === 'win32') {
+        try {
+            console.log('Setting Windows to dark theme...')
+            nativeTheme.themeSource = 'dark'
+        } catch (error) {
+            console.log('Could not set native theme to dark:', error.message)
+        }
+    } else {
+        nativeTheme.themeSource = 'system' // Start with system theme for other platforms
+    }
+    
     setupIPC()
     createWindow()
 })

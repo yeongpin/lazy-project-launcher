@@ -8,7 +8,7 @@
         </svg>
         <input 
           type="text" 
-          placeholder="Search projects..." 
+          :placeholder="t('project.search_projects')" 
           class="search-input"
           v-model="searchQuery"
         />
@@ -27,7 +27,7 @@
       <button 
         class="import-btn"
         @click="importProject"
-        title="Import new project"
+        :title="t('project.import_new_project')"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -45,6 +45,7 @@
 <script>
 import { ref } from 'vue'
 import ProjectList from '../components/ProjectList.vue'
+import { useI18n } from '../utils/useI18n'
 
 export default {
   name: 'ProjectView',
@@ -52,6 +53,9 @@ export default {
     ProjectList
   },
   setup() {
+    // Use i18n composable
+    const { t } = useI18n()
+    
     const searchQuery = ref('')
     
     const clearSearch = () => {
@@ -81,6 +85,7 @@ export default {
     }
     
     return {
+      t,
       searchQuery,
       clearSearch,
       importProject

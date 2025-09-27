@@ -137,7 +137,7 @@
 
 /* ===== dark theme variables ===== */
 @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
         --bg-primary: var(--gray-900);
         --bg-secondary: var(--gray-800);
         --bg-tertiary: var(--gray-700);
@@ -153,6 +153,43 @@
         --border-primary: var(--gray-700);
         --border-secondary: var(--gray-600);
     }
+}
+
+/* ===== manual theme overrides ===== */
+/* Light theme - force light mode */
+[data-theme="light"] {
+    --bg-primary: var(--white);
+    --bg-secondary: var(--gray-50);
+    --bg-tertiary: var(--gray-100);
+    --bg-card: var(--white);
+    --bg-overlay: rgba(0, 0, 0, 0.5);
+
+    --text-primary: var(--gray-900);
+    --text-secondary: var(--gray-600);
+    --text-tertiary: var(--gray-500);
+    --text-inverse: var(--white);
+    --text-muted: var(--gray-400);
+
+    --border-primary: var(--gray-200);
+    --border-secondary: var(--gray-300);
+}
+
+/* Dark theme - force dark mode */
+[data-theme="dark"] {
+    --bg-primary: var(--gray-900);
+    --bg-secondary: var(--gray-800);
+    --bg-tertiary: var(--gray-700);
+    --bg-card: var(--gray-800);
+    --bg-overlay: rgba(0, 0, 0, 0.7);
+
+    --text-primary: var(--gray-100);
+    --text-secondary: var(--gray-300);
+    --text-tertiary: var(--gray-400);
+    --text-inverse: var(--gray-900);
+    --text-muted: var(--gray-500);
+
+    --border-primary: var(--gray-700);
+    --border-secondary: var(--gray-600);
 }
 
 /* ===== global reset styles ===== */

@@ -3,7 +3,7 @@
     <button 
       class="action-btn start-btn"
       @click="startProject"
-      title="Start Project"
+      :title="t('project.start_project')"
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
@@ -13,7 +13,7 @@
     <button 
       class="action-btn terminal-btn"
       @click="openTerminal"
-      title="Open Terminal"
+      :title="t('project.open_terminal')"
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M4 16L8 12L4 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -24,7 +24,7 @@
     <button 
       class="action-btn settings-btn"
       @click="openSettings"
-      title="Settings"
+      :title="t('common.settings')"
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
@@ -35,12 +35,22 @@
 </template>
 
 <script>
+import { useI18n } from '../utils/useI18n'
+
 export default {
   name: 'ProjectActionBar',
   props: {
     project: {
       type: Object,
       required: true
+    }
+  },
+  setup() {
+    // Use i18n composable
+    const { t } = useI18n()
+    
+    return {
+      t
     }
   },
   methods: {
@@ -51,7 +61,7 @@ export default {
         const startCommands = settings ? JSON.parse(settings).startCommands : ''
         
         if (!startCommands.trim()) {
-          alert('Please set start commands in settings first!')
+          alert(this.t('messages.set_start_commands_first'))
           return
         }
         
@@ -67,14 +77,14 @@ export default {
             console.log('Project started successfully')
           } else {
             console.error('Failed to start project:', result.error)
-            alert('Failed to start project: ' + result.error)
+            alert(this.t('messages.project_start_failed') + ': ' + result.error)
           }
         } else {
           console.log('Starting project with commands:', startCommands)
         }
       } catch (error) {
         console.error('Error starting project:', error)
-        alert('Error starting project: ' + error.message)
+        alert(this.t('messages.project_start_error') + ': ' + error.message)
       }
     },
     
@@ -89,14 +99,14 @@ export default {
             console.log('Terminal opened successfully')
           } else {
             console.error('Failed to open terminal:', result.error)
-            alert('Failed to open terminal: ' + result.error)
+            alert(this.t('messages.terminal_open_failed') + ': ' + result.error)
           }
         } else {
           console.log('Opening terminal in:', this.project.path)
         }
       } catch (error) {
         console.error('Error opening terminal:', error)
-        alert('Error opening terminal: ' + error.message)
+        alert(this.t('messages.terminal_open_error') + ': ' + error.message)
       }
     },
     

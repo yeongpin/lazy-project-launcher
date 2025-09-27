@@ -1,4 +1,9 @@
-## [0.1.0] - 2025-09-24
+## [1.0.1] - 2025-09-27
+
+### Added
+- New Theme Version
+
+## [1.0.0] - 2025-09-24
 
 ### Added
 - Basic application structure

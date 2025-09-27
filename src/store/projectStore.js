@@ -43,6 +43,12 @@ const projectStore = reactive({
     }
   },
 
+  // reorder projects
+  reorderProjects(newOrder) {
+    this.projects.splice(0, this.projects.length, ...newOrder)
+    saveProjects(this.projects) // save to localStorage
+  },
+
   // get project count
   get projectCount() {
     return this.projects.length
