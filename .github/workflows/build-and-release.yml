@@ -65,10 +65,19 @@ jobs:
         run: |
           # Extract version number without 'v' prefix
           VERSION_NUMBER=$(echo "${{ env.VERSION }}" | sed 's/^v//')
-          echo "Setting package.json version to: $VERSION_NUMBER"
-          npm version $VERSION_NUMBER --no-git-tag-version
-          echo "Updated package.json version:"
-          node -p "require('./package.json').version"
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          
+          echo "Current package.json version: $CURRENT_VERSION"
+          echo "Target version: $VERSION_NUMBER"
+          
+          if [ "$CURRENT_VERSION" != "$VERSION_NUMBER" ]; then
+            echo "Updating package.json version to: $VERSION_NUMBER"
+            npm version $VERSION_NUMBER --no-git-tag-version
+            echo "Updated package.json version:"
+            node -p "require('./package.json').version"
+          else
+            echo "Package.json version already matches target version, skipping update"
+          fi
         
       # Build the application
       - name: Build Application
