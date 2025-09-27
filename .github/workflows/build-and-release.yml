@@ -59,6 +59,17 @@ jobs:
       - name: Install Dependencies
         run: npm ci
         
+      # Update package.json version to match tag/input
+      - name: Update package.json version
+        shell: bash
+        run: |
+          # Extract version number without 'v' prefix
+          VERSION_NUMBER=$(echo "${{ env.VERSION }}" | sed 's/^v//')
+          echo "Setting package.json version to: $VERSION_NUMBER"
+          npm version $VERSION_NUMBER --no-git-tag-version
+          echo "Updated package.json version:"
+          node -p "require('./package.json').version"
+        
       # Build the application
       - name: Build Application
         run: npm run build
@@ -72,28 +83,63 @@ jobs:
           # APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           # APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           
-      # List release directory contents
-      - name: List release directory
+      # List both possible output directories
+      - name: List output directories
         shell: bash
         run: |
-          echo "Release directory contents:"
-          ls -la release/
+          echo "Checking for output directories..."
+          if [ -d "release" ]; then
+            echo "Release directory contents:"
+            ls -la release/
+          fi
+          if [ -d "dist" ]; then
+            echo "Dist directory contents:"
+            ls -la dist/
+          fi
+          echo "Current directory contents:"
+          ls -la
         
       # Rename and organize artifacts
       - name: Process Artifacts
         shell: bash
         run: |
           mkdir -p ./artifacts
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            find release -name "*.exe" -exec cp {} "./artifacts/lazy_project_launcher_${{ env.VERSION }}_win_setup.exe" \;
-          # elif [ "${{ matrix.os }}" = "macos-latest" ]; then
-          #   if [ "${{ matrix.arch }}" = "arm64" ]; then
-          #     find release -name "*-arm64.dmg" -exec cp {} "./artifacts/lazy_project_launcher_${{ env.VERSION }}_mac_arm64.dmg" \;
-          #   else
-          #     find release -name "*.dmg" -not -name "*-arm64.dmg" -exec cp {} "./artifacts/lazy_project_launcher_${{ env.VERSION }}_mac.dmg" \;
-          #   fi
+          
+          # Check both release and dist directories
+          OUTPUT_DIR=""
+          if [ -d "release" ] && [ "$(ls -A release 2>/dev/null)" ]; then
+            OUTPUT_DIR="release"
+          elif [ -d "dist" ] && [ "$(ls -A dist 2>/dev/null)" ]; then
+            OUTPUT_DIR="dist"
           else
-            find release -name "*.AppImage" -exec cp {} "./artifacts/lazy_project_launcher_${{ env.VERSION }}_linux.AppImage" \;
+            echo "Error: No build output directory found!"
+            exit 1
+          fi
+          
+          echo "Using output directory: $OUTPUT_DIR"
+          
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            # Find and copy Windows executable
+            EXE_FILE=$(find $OUTPUT_DIR -name "*.exe" -type f | head -1)
+            if [ -n "$EXE_FILE" ]; then
+              echo "Found Windows executable: $EXE_FILE"
+              cp "$EXE_FILE" "./artifacts/lazy_project_launcher_${{ env.VERSION }}_win_setup.exe"
+              echo "File size: $(ls -lh "$EXE_FILE" | awk '{print $5}')"
+            else
+              echo "Error: No Windows executable found!"
+              exit 1
+            fi
+          else
+            # Find and copy Linux AppImage
+            APPIMAGE_FILE=$(find $OUTPUT_DIR -name "*.AppImage" -type f | head -1)
+            if [ -n "$APPIMAGE_FILE" ]; then
+              echo "Found Linux AppImage: $APPIMAGE_FILE"
+              cp "$APPIMAGE_FILE" "./artifacts/lazy_project_launcher_${{ env.VERSION }}_linux.AppImage"
+              echo "File size: $(ls -lh "$APPIMAGE_FILE" | awk '{print $5}')"
+            else
+              echo "Error: No Linux AppImage found!"
+              exit 1
+            fi
           fi
           
           # 显示artifacts目录内容以验证
