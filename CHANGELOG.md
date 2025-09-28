@@ -1,3 +1,8 @@
+## [1.0.3] - 2029-09-28
+
+### Fixed
+- Frame Menu Locale Lanagueg file problem
+
 ## [1.0.2] - 2029-09-28
 
 ### Added

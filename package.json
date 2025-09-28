@@ -1,6 +1,6 @@
 {
     "name": "lazy-project-launcher",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "author": "Yeongpin",
     "description": "A simple and efficient project launcher built with Electron and Vue.js for managing multiple development projects.",
     "main": "electron/main.js",
@@ -30,6 +30,7 @@
         "files": [
             "electron/**/*",
             "dist/**/*",
+            "src/locale/**/*",
             "main.js",
             "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
             "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",

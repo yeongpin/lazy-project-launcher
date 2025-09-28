@@ -237,8 +237,24 @@ class FrameMenu {
     // Get localized menu labels from JSON files
     getMenuLabels() {
         try {
-            const localeFile = path.join(__dirname, '../src/locale', `${this.currentLocale}.json`)
-            if (fs.existsSync(localeFile)) {
+            // Try multiple possible paths for locale files
+            const possiblePaths = [
+                path.join(__dirname, '../src/locale', `${this.currentLocale}.json`), // Development
+                path.join(__dirname, '../dist/src/locale', `${this.currentLocale}.json`), // Build
+                path.join(__dirname, '../locale', `${this.currentLocale}.json`), // Alternative build path
+                path.join(process.cwd(), 'src/locale', `${this.currentLocale}.json`), // From project root
+                path.join(process.cwd(), 'dist/src/locale', `${this.currentLocale}.json`) // From project root dist
+            ]
+            
+            let localeFile = null
+            for (const possiblePath of possiblePaths) {
+                if (fs.existsSync(possiblePath)) {
+                    localeFile = possiblePath
+                    break
+                }
+            }
+            
+            if (localeFile) {
                 const localeData = JSON.parse(fs.readFileSync(localeFile, 'utf8'))
                 return {
                     file: localeData.menu.file,
@@ -268,59 +284,77 @@ class FrameMenu {
             console.error('Error loading locale file:', error)
         }
         
-        // Fallback to English
-        const fallbackFile = path.join(__dirname, '../src/locale/en.json')
-        try {
-            const localeData = JSON.parse(fs.readFileSync(fallbackFile, 'utf8'))
-            return {
-                file: localeData.menu.file,
-                import_project: localeData.menu.import_project,
-                exit: localeData.menu.exit,
-                window: localeData.menu.window,
-                minimize: localeData.menu.minimize,
-                maximize: localeData.menu.maximize,
-                close: localeData.menu.close,
-                close_as: localeData.menu.close_as,
-                exit_application: localeData.menu.exit_application,
-                minimize_to_tray: localeData.menu.minimize_to_tray,
-                theme: localeData.menu.theme,
-                system_default: localeData.menu.system_default,
-                light: localeData.menu.light,
-                dark: localeData.menu.dark,
-                language: localeData.menu.language,
-                english: 'English',
-                simplified_chinese: '简体中文',
-                traditional_chinese: '繁體中文',
-                help: localeData.menu.help,
-                about: localeData.menu.about,
-                developer_tools: localeData.menu.developer_tools
+        // Fallback to English - try multiple paths
+        const fallbackPaths = [
+            path.join(__dirname, '../src/locale/en.json'), // Development
+            path.join(__dirname, '../dist/src/locale/en.json'), // Build
+            path.join(__dirname, '../locale/en.json'), // Alternative build path
+            path.join(process.cwd(), 'src/locale/en.json'), // From project root
+            path.join(process.cwd(), 'dist/src/locale/en.json') // From project root dist
+        ]
+        
+        let fallbackFile = null
+        for (const fallbackPath of fallbackPaths) {
+            if (fs.existsSync(fallbackPath)) {
+                fallbackFile = fallbackPath
+                break
             }
-        } catch (error) {
-            console.error('Error loading fallback locale file:', error)
-            // Hard fallback
-            return {
-                file: 'File',
-                import_project: 'Import Project',
-                exit: 'Exit',
-                window: 'Window',
-                minimize: 'Minimize',
-                maximize: 'Maximize',
-                close: 'Close',
-                close_as: 'Close as',
-                exit_application: 'Exit Application',
-                minimize_to_tray: 'Minimize to Tray',
-                theme: 'Theme',
-                system_default: 'System Default',
-                light: 'Light',
-                dark: 'Dark',
-                language: 'Language',
-                english: 'English',
-                simplified_chinese: '简体中文',
-                traditional_chinese: '繁體中文',
-                help: 'Help',
-                about: 'About',
-                developer_tools: 'Developer Tools'
+        }
+        
+        if (fallbackFile) {
+            try {
+                const localeData = JSON.parse(fs.readFileSync(fallbackFile, 'utf8'))
+                return {
+                    file: localeData.menu.file,
+                    import_project: localeData.menu.import_project,
+                    exit: localeData.menu.exit,
+                    window: localeData.menu.window,
+                    minimize: localeData.menu.minimize,
+                    maximize: localeData.menu.maximize,
+                    close: localeData.menu.close,
+                    close_as: localeData.menu.close_as,
+                    exit_application: localeData.menu.exit_application,
+                    minimize_to_tray: localeData.menu.minimize_to_tray,
+                    theme: localeData.menu.theme,
+                    system_default: localeData.menu.system_default,
+                    light: localeData.menu.light,
+                    dark: localeData.menu.dark,
+                    language: localeData.menu.language,
+                    english: 'English',
+                    simplified_chinese: '简体中文',
+                    traditional_chinese: '繁體中文',
+                    help: localeData.menu.help,
+                    about: localeData.menu.about,
+                    developer_tools: localeData.menu.developer_tools
+                }
+            } catch (error) {
+                console.error('Error loading fallback locale file:', error)
             }
+        }
+        
+        // Hard fallback
+        return {
+            file: 'File',
+            import_project: 'Import Project',
+            exit: 'Exit',
+            window: 'Window',
+            minimize: 'Minimize',
+            maximize: 'Maximize',
+            close: 'Close',
+            close_as: 'Close as',
+            exit_application: 'Exit Application',
+            minimize_to_tray: 'Minimize to Tray',
+            theme: 'Theme',
+            system_default: 'System Default',
+            light: 'Light',
+            dark: 'Dark',
+            language: 'Language',
+            english: 'English',
+            simplified_chinese: '简体中文',
+            traditional_chinese: '繁體中文',
+            help: 'Help',
+            about: 'About',
+            developer_tools: 'Developer Tools'
         }
     }
 
