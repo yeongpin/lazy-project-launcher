@@ -1,7 +1,14 @@
+## [1.0.2] - 2029-09-28
+
+### Added
+- Minimize on tray
+- Close Application
+
 ## [1.0.1] - 2025-09-27
 
 ### Added
 - New Theme Version
+- Locale Languege
 
 ## [1.0.0] - 2025-09-24
 

@@ -242,6 +242,19 @@ function createWindow() {
     frameMenu = new FrameMenu(mainWindow)
     frameMenu.createMenu()
     console.log('Frame menu created')
+    
+    // Handle window close event
+    mainWindow.on('close', (event) => {
+        if (frameMenu && frameMenu.closeToTray) {
+            event.preventDefault()
+            frameMenu.minimizeToTray()
+        } else {
+            // Clean up tray when actually closing
+            if (frameMenu) {
+                frameMenu.destroyTray()
+            }
+        }
+    })
 }
 
 // This method will be called when Electron has finished initialization

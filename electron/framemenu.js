@@ -1,4 +1,4 @@
-const { Menu, dialog, ipcMain } = require('electron')
+const { Menu, dialog, ipcMain, Tray, nativeImage } = require('electron')
 const path = require('path')
 const fs = require('fs')
 
@@ -7,6 +7,8 @@ class FrameMenu {
         this.mainWindow = mainWindow
         this.currentTheme = this.loadTheme() // load saved theme or default to 'system'
         this.currentLocale = this.loadLocale() // load saved locale or default to 'en'
+        this.tray = null
+        this.closeToTray = false // Default behavior: exit application
     }
 
     createMenu() {
@@ -74,13 +76,31 @@ class FrameMenu {
                         }
                     },
                     {
-                        label: menuLabels.close,
-                        accelerator: 'CmdOrCtrl+W',
-                        click: () => {
-                            if (this.mainWindow) {
-                                this.mainWindow.close()
+                        label: menuLabels.close_as,
+                        submenu: [
+                            {
+                                label: menuLabels.exit_application,
+                                type: 'radio',
+                                checked: !this.closeToTray,
+                                accelerator: 'CmdOrCtrl+Q',
+                                click: () => {
+                                    this.closeToTray = false
+                                    if (this.mainWindow) {
+                                        this.mainWindow.close()
+                                    }
+                                }
+                            },
+                            {
+                                label: menuLabels.minimize_to_tray,
+                                type: 'radio',
+                                checked: this.closeToTray,
+                                accelerator: 'CmdOrCtrl+W',
+                                click: () => {
+                                    this.closeToTray = true
+                                    this.minimizeToTray()
+                                }
                             }
-                        }
+                        ]
                     }
                 ]
             },
@@ -228,6 +248,9 @@ class FrameMenu {
                     minimize: localeData.menu.minimize,
                     maximize: localeData.menu.maximize,
                     close: localeData.menu.close,
+                    close_as: localeData.menu.close_as,
+                    exit_application: localeData.menu.exit_application,
+                    minimize_to_tray: localeData.menu.minimize_to_tray,
                     theme: localeData.menu.theme,
                     system_default: localeData.menu.system_default,
                     light: localeData.menu.light,
@@ -257,6 +280,9 @@ class FrameMenu {
                 minimize: localeData.menu.minimize,
                 maximize: localeData.menu.maximize,
                 close: localeData.menu.close,
+                close_as: localeData.menu.close_as,
+                exit_application: localeData.menu.exit_application,
+                minimize_to_tray: localeData.menu.minimize_to_tray,
                 theme: localeData.menu.theme,
                 system_default: localeData.menu.system_default,
                 light: localeData.menu.light,
@@ -280,6 +306,9 @@ class FrameMenu {
                 minimize: 'Minimize',
                 maximize: 'Maximize',
                 close: 'Close',
+                close_as: 'Close as',
+                exit_application: 'Exit Application',
+                minimize_to_tray: 'Minimize to Tray',
                 theme: 'Theme',
                 system_default: 'System Default',
                 light: 'Light',
@@ -503,6 +532,90 @@ class FrameMenu {
             })
         } catch (error) {
             console.error('Error showing about dialog:', error)
+        }
+    }
+
+    // Tray functionality
+    createTray() {
+        if (this.tray) return
+
+        try {
+            // Create tray icon
+            const iconPath = path.join(__dirname, '../icon.png')
+            let trayIcon = nativeImage.createFromPath(iconPath)
+            
+            // Resize icon for tray (16x16 for Windows/Linux)
+            if (process.platform !== 'darwin') {
+                trayIcon = trayIcon.resize({ width: 16, height: 16 })
+            }
+            
+            this.tray = new Tray(trayIcon)
+            
+            // Set tooltip
+            this.tray.setToolTip('Lazy Project Launcher')
+            
+            // Create tray context menu
+            const contextMenu = Menu.buildFromTemplate([
+                {
+                    label: 'Show',
+                    click: () => {
+                        this.showWindow()
+                    }
+                },
+                {
+                    label: 'Hide',
+                    click: () => {
+                        if (this.mainWindow) {
+                            this.mainWindow.hide()
+                        }
+                    }
+                },
+                { type: 'separator' },
+                {
+                    label: 'Exit',
+                    click: () => {
+                        this.closeToTray = false
+                        if (this.mainWindow) {
+                            this.mainWindow.close()
+                        }
+                    }
+                }
+            ])
+            
+            this.tray.setContextMenu(contextMenu)
+            
+            // Double-click to show/hide window
+            this.tray.on('double-click', () => {
+                this.showWindow()
+            })
+            
+            console.log('Tray created successfully')
+        } catch (error) {
+            console.error('Failed to create tray:', error)
+        }
+    }
+
+    minimizeToTray() {
+        if (!this.tray) {
+            this.createTray()
+        }
+        
+        if (this.mainWindow) {
+            this.mainWindow.hide()
+        }
+    }
+
+    showWindow() {
+        if (this.mainWindow) {
+            this.mainWindow.show()
+            this.mainWindow.focus()
+        }
+    }
+
+    destroyTray() {
+        if (this.tray) {
+            this.tray.destroy()
+            this.tray = null
         }
     }
 
